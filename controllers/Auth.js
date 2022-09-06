@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const {CustomAPIError} = require("../errors/index")
+const {BadRequestError, UnauthenticatedError} = require("../errors/index")
 
 const register = async (req, res) => {
 
@@ -17,15 +17,33 @@ const register = async (req, res) => {
 }
 
 const login = async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if(!username || !password) {
-        throw new CustomAPIError('Please provide email and password', 400)
+    if(!email || !password) {
+        throw new BadRequestError('Please provide email and password')
     }
 
-    const token = User.createJWT()
+    const user = await User.findOne({ email })
 
-    res.send("Login")
+    if(!user) {
+        throw new UnauthenticatedError('Invalid credentials')
+    }
+
+    const passwordOk = await user.checkPassword(password)
+    if(!passwordOk) {
+        throw new UnauthenticatedError('Invalid credentials')
+    }
+
+    const token = user.createJWT();
+
+    res.status(200).json({
+        success: true,
+        message: "Login successful",
+        data: {
+            user,
+            token
+        }
+    })
 }
 
 module.exports = { register, login }

@@ -1,5 +1,5 @@
 const index = async (req, res) => {
-    res.send("Get all jobs")
+    res.json(req.user)
 }
 
 const store = async (req, res) => {
